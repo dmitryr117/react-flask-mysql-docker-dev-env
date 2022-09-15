@@ -1,0 +1,19 @@
+FROM ubuntu:20.04
+
+ENV TZ="America/Edmonton"
+
+COPY ./requirements.txt /requirements.txt
+
+RUN apt-get update && \
+    apt-get install software-properties-common -y && \
+    apt-get install libcairo2-dev pkg-config python3-pip python3-mysqldb -y && \
+    pip install -U pip && \
+    ln -s /usr/bin/python3 /usr/bin/python && \
+    python --version && pip --version
+
+RUN pip install -r requirements.txt
+
+WORKDIR /flaskapp
+#ENTRYPOINT [ "source /venv/bin/activate" ]
+
+CMD ["tail", "-f", "/dev/null"]

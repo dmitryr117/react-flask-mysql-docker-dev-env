@@ -1,0 +1,29 @@
+FROM ubuntu:22.04
+
+ARG nodeversion="18.x"
+
+ENV TZ="America/Edmonton"
+
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && \
+	  echo $TZ > /etc/timezone && \
+    apt-get update && \
+    apt-get install -y curl git software-properties-common && \
+    apt-get install python3-pip -y && \
+    pip install -U pip && \
+    ln -s /usr/bin/python3 /usr/bin/python
+    
+RUN sh -c "$(curl -sSfL https://deb.nodesource.com/setup_${nodeversion})" && \
+    apt-get update &&\
+    apt-get install -y nodejs && \
+    node --version && \
+    npm install -g npm@latest && \
+    npm install --global yarn ts-node && \
+    node --version && \
+    yarn --version && \
+    ts-node --version
+
+RUN mkdir /app
+
+WORKDIR /app
+
+CMD ["tail", "-f", "/dev/null"]

@@ -1,0 +1,107 @@
+version: '3'
+
+services:
+  nginx-ptc:
+    image: 'nginx'
+    container_name: nginx-ptc
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - flask-ptc
+    #  - react-ptc
+    networks:
+      - default
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/server_confs:/etc/nginx/server_confs
+      - ./nginx/snippets:/etc/nginx/snippets
+      - ./nginx/ssl:/etc/ssl
+  
+  flask-ptc:
+    image: 'dmitryr117/python-flask:2.2.2-dev'
+    container_name: flask_ptc
+    restart: unless-stopped
+    working_dir: /flaskapp
+    depends_on:
+      - mysql-ptc
+    expose:
+      - 80
+    environment:
+      - FLASK_SECRET_KEY="5f352379324c22463451387a0aec5d2f"
+      - FLASK_MAIL_ENABLED=false
+      - FLASK_DEBUG=true
+      - FLASK_APP=/flaskapp/app.py
+      - MYSQL_HOST=mysql-ptc
+      - MYSQL_PORT=3306
+      - MYSQL_DATABASE=ptc
+      - MYSQL_USER=ptuser
+      - MYSQL_PASSWORD=gzXqQxzYlcDiGKhp
+    # command: 'flask run --host=0.0.0.0 --port=80'
+    # ports:
+    #   - 8080:8000
+    networks:
+      - default
+      - ptc-db-net
+    volumes:
+      - ./flaskapp:/flaskapp
+
+  react-ptc:
+    image: 'dmitryr117/node:18.8.0-dev'
+    container_name: react-ptc
+    restart: unless-stopped
+    volumes:
+      - ./react:/app
+      - /snap/bin/brave:/snap/bin/brave
+    environment:
+      - HOST=0.0.0.0
+      - PORT=80
+      - WDS_SOCKET_HOST=0.0.0.0
+      - WDS_SOCKET_PORT=0
+    expose:
+      - 80
+    networks:
+      - default
+
+  mysql-ptc:
+    image: 'mysql:8.0'
+    container_name: ptc-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_HOST: "%"
+      MYSQL_ROOT_PASSWORD: rootpass
+    volumes:
+      - ./volumes/mysql:/var/lib/mysql
+    networks:
+      - ptc-db-net
+    expose:
+      - 3306
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  phpadmin-ptc:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpdbadmin-ptc
+    restart: unless-stopped
+    depends_on:
+      - mysql-ptc
+    environment: 
+      PMA_HOST: mysql-ptc
+      UPLOAD_LIMIT: 256M
+    ports:
+      - 8085:80
+    networks:
+      - ptc-db-net
+    # volumes:
+    #   - /sessions
+    #   - ./phpmyadmin_config/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
+
+networks:
+  default:
+  ptc-db-net:
+    external:
+      name: ptc-db-net

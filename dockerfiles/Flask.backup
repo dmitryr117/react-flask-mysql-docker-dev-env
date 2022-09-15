@@ -1,0 +1,20 @@
+FROM ubuntu:20.04
+
+ENV TZ="America/Edmonton"
+
+COPY ./requirements.txt /requirements.txt
+
+RUN apt-get update && \
+    apt install software-properties-common -y && \
+    add-apt-repository ppa:deadsnakes/ppa && apt-get update && \
+    apt-get install python3-pip -y && \
+    pip install -U pip && pip install virtualenv && \
+    ln -s /usr/bin/python3 /usr/bin/python && \
+    python --version && pip --version
+
+RUN virtualenv venv && . /venv/bin/activate && pip install -r requirements.txt
+
+WORKDIR /flask
+#ENTRYPOINT [ "source /venv/bin/activate" ]
+
+CMD ["tail", "-f", "/dev/null"]
